@@ -1,0 +1,161 @@
+syntax = "proto3";
+package GrpcProtos;
+option go_package = "./;GateWayProtos";
+
+// grpc service 函数接口使用驼峰式命名,首字母大写
+// message 使用驼峰式命名,首字母大写
+// message 成员数据使用下划线命名, 全小写
+// enum 枚举类型使用驼峰式命名, 首字母大写
+// enum 每一项使用全大写, 下划线分隔命名
+
+// 统一服务接口
+service UnifiedService {
+    rpc CallService(UnifiedRequest) returns (UnifiedResponse) {}
+}
+
+// 统一服务调用请求
+message UnifiedRequest {
+    int32 cmd     = 1;
+    bytes request = 2;
+}
+
+// 统一服务调用返回
+message UnifiedResponse {
+    int32 cmd      = 1;
+    int32 result   = 2;
+    bytes response = 3;
+}
+
+// 服务类型
+enum ServiceType {
+    SERVICE_TYPE_NONE     = 0;
+    REGISTER_CENTER       = 6000;  // 注册中心, Port = 6000
+
+    SERVICE_ALGO_GATE_WAY = 9080;  // 算法网关
+    SERVICE_ALGO_CENTER   = 9090;  // 算法中控
+}
+
+// 服务接口
+enum CmdType {
+    CMD_NONE = 0;
+
+    // 注册中心
+    CMD_REGISTER = 10;    // 注册
+    CMD_ONLINE   = 20;    // 上线
+    CMD_OFFLINE  = 30;    // 下线
+    CMD_PING     = 40;    // 心跳
+    CMD_CHECK    = 50;    // 校验
+    CMD_RELOAD   = 60;    // 更新推送
+    CMD_NOTIFY   = 70;    // 通知协议
+    CMD_HELLO    = 100;   // Hello协议
+
+
+    // 算法中控
+    CMD_GET_DOWNLOAD_RECOMMEND = 908001;  // 买了又买推荐
+}
+
+// 错误码定义
+enum ResultType {
+    OK                  = 0;
+    ERR_Unknown         = 1;   // 未知错误
+    ERR_Service_CMD     = 2;   // 没有可用的grpc服务接口
+    ERR_NO_Server       = 3;   // 没有可用的grpc服务接口
+    ERR_Decode_Request  = 4;   // 解析请求参数错误
+    ERR_Encode_Response = 5;   // 编码返回信息错误
+    ERR_Call_Service    = 6;   // 调用服务错误
+    ERR_Decode_Response = 7;   // 解析返回信息错误
+    ERR_Encode_Request  = 8;   // 编码请求信息错误
+    ERR_Service_Cal     = 9;   // 服务计算错误(服务内部出错)
+    ERR_Service_Timeout = 10;  // 服务计算超时
+    ERR_Grpc_Closed     = 11;  // Grpc已经关闭
+    ERR_Rate_Limit      = 12;  // 接口速率限制
+}
+
+// 服务状态
+enum ServiceStatus {
+    Unknown  = 0;
+    Register = 1;
+    Online   = 2;
+    Offline  = 3;
+}
+
+// 连接模式
+enum ConnectMode {
+    GRPC = 0; // 默认GRPC
+}
+
+// 依赖信息
+message RelyInfo {
+    int32  rely_service_type = 1;  // 服务类型: ServiceType
+    string rely_semver       = 2;  // 依赖版本: Semver Major.Minor.Patch
+}
+
+// 服务信息
+message ServiceInfo {
+    int32              service_type   = 1;  // 服务类型: ServiceType
+    string             semver         = 2;  // 服务版本: Semver Major.Minor.Patch
+    string             addr           = 3;  // 服务地址: ip:port
+    string             host_name      = 4;  // 主 机 名: algorithm-1
+    int32              status         = 5;  // 服务状态: ServiceStatus
+    repeated RelyInfo  rely_list      = 6;  // 依赖服务：依赖下级服务列表
+    int32              service_weight = 7;  // 服务权重: 机器CPU核数
+    int32              connect_mode   = 8;  // 连接模式: ConnectMode
+    string             group_tab      = 9;  // 分组标签: proc_default
+    string             service_name   = 10; // 服务名称: AlgoCenter
+    string             nickname       = 11; // 服务昵称: 算法中控
+}
+
+// 关注服务列表
+message WatchServiceInfo {
+    int32                service_type = 1;
+    repeated ServiceInfo service_list = 2;
+}
+
+// CMD_REGISTER
+message RegisterRequest {
+    ServiceInfo service_info = 1;
+}
+message RegisterReply {
+    repeated WatchServiceInfo watch_list = 1;
+}
+
+// CMD_ONLINE
+message OnlineRequest {
+    ServiceInfo service_info = 1;
+}
+message OnlineReply {
+    repeated WatchServiceInfo watch_list = 1;
+}
+
+// CMD_OFFLINE
+message OfflineRequest {
+    ServiceInfo service_info = 1;
+}
+
+// CMD_PING
+message PingRequest {
+    ServiceInfo service_info = 1;
+}
+
+// CMD_CHECK
+message CheckRequest {
+    ServiceInfo               service_info = 1;
+    repeated WatchServiceInfo watch_list   = 2;
+}
+message CheckReply {
+    repeated WatchServiceInfo watch_list = 1;
+}
+
+// CMD_PING
+message ReloadRequest {
+    ServiceInfo service_info = 1;
+}
+
+// CMD_NOTIFY
+message NotifyRequest {
+    ServiceInfo service_info = 1;
+}
+
+// 公用空返回消息结构
+message EmptyResponse {}
+

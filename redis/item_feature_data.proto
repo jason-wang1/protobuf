@@ -1,0 +1,81 @@
+syntax = "proto3";
+package RSP_ItemFeatureData;
+
+// feature_name:
+//      basic  - 物料基础特征
+//      statis - 物料统计特征
+//      index  - 物料索引数据
+//
+// 作品特征信息分为1万个桶: (bucket_num = 10000)
+// feature_space = item_feature
+// bucket_idx = [ll_id%bucket_num]
+// feature_type = proto
+// params 为其他参数(必须为string)
+// key = {[feature_space][:feature_type][:bucket_idx]}
+// field = [ll_id][:feature_name][:params]
+//
+// 举例: ll_id = 1078384, feature_name = basic, params = res_type
+// 计算: key = {item_feature:proto:8384}
+// 计算: field = 1078384:basic:1
+//
+// P.s> 当物料特征更新完毕后, 需要更新时间戳Hash结构
+// item_features_update_time (时间戳)
+// 此时更新 field 计算方案为: [feature_space][:feature_name]:[feature_type]
+// 举例: feature_name = basic
+// 计算: field = item_feature:basic:proto
+
+message IDWeight {
+    int64 id     = 1;  // ID
+    float weight = 2;  // 权重
+}
+
+// 物料基础特征
+message ItemFeatureBasic {
+    int64 timestamp              = 1;    // 入库时间戳
+    int64 ll_id                  = 2;    // 素材id
+    int32 res_style              = 3;    // 风格。如："现代"
+    int32 style_id               = 4;    // 素材风格
+    int32 res_name               = 5;    // 素材名称
+    int32 class_id_1             = 6;    // 大类id
+    int32 class_id_2             = 7;    // 小类id
+    int32 class_id               = 8;    // 最小类别id，可能是class_id_1，也可能是class_id_2
+    int32 res_price              = 9;    // 溜币价格
+    int32 pay_type               = 10;    // 收费类型(0:免费，1:溜币，2精品，3vip)
+    int64 up_time                = 11;    // 素材上传时间
+    repeated int32 keyname_list  = 12;    // 关键字 "家具组合,客厅,溜溜第二季,普通靠背沙发,有贴图,单人沙发,现代,沙发"
+    int32 res_type               = 13;    // 素材类目 1~12
+    int64 user_id                = 14;    // 上传素材的作者id
+    int64 studio_id              = 15;    // 企业id
+    int32 heart_level            = 16;    // 等级（1：心动；2：优；3：良；4：中；5：差）0、99: 未评
+    int32 type                   = 17;    // 搜索素材等级(0:普通，1:中等，2:高等)
+    int32 is_single              = 18;    // 类型细分（0整体模型，1单体模型）
+    int32 res_map                = 19;    // 是否有贴图(1:是 0:没有)
+    int32 has_3dl                = 20;    // 是否有3DL文件(1:有 0:没有)
+    int32 renderer_version       = 21;    // 渲染器类型：0-未知、1-VR、2-CR、3-VR(gama1.0)、4-VR(gama2.2)
+    int32 res_good               = 22;    // 是否推荐(0:未处理 1:好，2:不好)
+    int32 is_pano                = 23;    // 是否是全景图（0：否，1：是）
+    int32 is_brand               = 24;    // 品牌模型(0=>否 1=>是)
+    int32 have_lights            = 25;    // 是否有灯光（1是0否）
+    int32 use_place              = 26;    // 素材使用范围 ( 0：仅WEB，1：全部, 2：仅溜云库)
+}
+  
+// 物料统计特征
+message ItemFeatureStatis {
+    int64 timestamp         = 1;  // 灌库时间戳
+    float click_14_days     = 2;
+    float click_30_days     = 3;
+    float ctr_14_days       = 4;
+    float ctr_30_days       = 5;
+    float download_14_days  = 6;
+    float download_30_days  = 7;
+    float ctcvr_14_days     = 8;
+    float ctcvr_30_days     = 9;
+}
+  
+// 物料索引数据
+message ItemFeatureIndex {
+    int64 timestamp                  = 1;  // 灌库时间戳
+    repeated IDWeight cf_item        = 2;  // 协同过滤物料列表
+    repeated IDWeight click_occur    = 3;  // 点击共现
+    repeated IDWeight download_occur = 4;  // 下载共现
+}

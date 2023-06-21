@@ -1,0 +1,75 @@
+syntax = "proto3";
+package RSP_UserLiveFeatureData;
+
+// 用户特征
+// feature_name:
+//      live_click    - 用户实时点击特征
+//      live_search   - 用户实时搜索特征
+//      live_download - 用户实时下载数据
+//
+// 用户特征信息分为1万个桶: (bucket_num = 10000)
+// feature_space = user_live_feature
+// bucket_idx = [uin%bucket_num]
+// feature_type = proto
+// params 为备用参数(必须为string)
+// key = {[feature_space][:feature_type][:bucket_idx]}
+// field = [uin][:feature_name][:params]
+//    ps. key里面的大括号用于redis slot hash计算, 是新版灌库方案特点之一...
+
+// 举例: uin = 1059925, feature_name = live_click, params is empty
+// 计算 key = {user_live_feature:proto:9925}
+// 计算 field = 1059925:live_click
+
+// P.s 1> 当用户特征更新完毕后, 需要更新时间戳Hash结构
+//      user_live_features_update_time (时间戳)
+// 此时更新 field 计算方案为: [feature_space][:feature_name]:[feature_type]
+// 举例: feature_name = beviour
+// 计算: field = user_live_feature:beviour:proto
+
+// P.s 2> 特征清理
+// 当我们需要清理特征时, 根据key, 通过HSCAN遍历Hash结构, 得到所有的 field 和
+// value 然后通过 UserLiveFeature_Clean 结构解析value得到 timestamp 字段
+// 如果field对应数据超时了, 通过 HDEL key field field ... 删除多条数据
+
+// 用户特征 - 清理结构
+message UserLiveFeatureClean {
+    int64 timestamp = 1;  // 灌库时间戳
+}
+
+message IDWeight {
+    int64 id     = 1;  // ID
+    float weight = 2;  // 权重
+}
+
+message IDWeightList {
+    repeated IDWeight id_list = 1;
+}
+
+message IDTime {
+    int64 id        = 1;  // ID
+    int64 timestamp = 2;  // 时间戳
+}
+
+message IDTimeList {
+    repeated IDTime id_list = 1;
+}
+
+
+// 用户实时点击特征
+message UserLiveFeatureClick{
+    int64 timestamp                   = 1;  // 灌库时间戳
+    map<int32, IDTimeList> click_item = 2;  // <类目, 用户点击物料列表>
+}
+
+// 用户实时搜索特征
+message UserLiveFeatureSearch{
+    int64 timestamp                     = 1;  // 灌库时间戳
+    map<int32, IDTimeList> search_words = 2;  // <类目, 用户最近搜索词列表>
+}
+
+// 用户实时下载数据
+message UserLiveFeatureDownload{
+    int64 timestamp                      = 1;  // 灌库时间戳
+    map<int32, IDTimeList> download_item = 2;  // <类目, 用户最近下载物料列表>
+}
+

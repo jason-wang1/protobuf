@@ -1,0 +1,6 @@
+syntax = "proto3";
+package RSP_LocalFileData;
+
+message FileData {
+  repeated bytes protos = 1;
+}

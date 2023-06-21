@@ -1,0 +1,96 @@
+syntax = "proto3";
+package RSP_UserFeatureData;
+
+// 用户特征
+// feature_name:
+//      basic    - 用户基础特征
+//      click    - 用户点击特征
+//      search   - 用户搜索特征
+//      download - 用户下载数据
+//      index    - 用户索引数据
+//
+// 用户特征信息分为1万个桶: (bucket_num = 10000)
+// feature_space = user_feature
+// bucket_idx = [uin%bucket_num]
+// feature_type = proto
+// params 为备用参数(必须为string)
+// key = {[feature_space][:feature_type][:bucket_idx]}
+// field = [uin][:feature_name][:params]
+//    ps. key里面的大括号用于redis slot hash计算, 是新版灌库方案特点之一...
+
+// 举例: uin = 1059925, feature_name = basic, params is empty
+// 计算 key = {user_feature:proto:9925}
+// 计算 field = 1059925:basic
+
+// P.s 1> 当用户特征更新完毕后, 需要更新时间戳Hash结构
+//      user_features_update_time (时间戳)
+// 此时更新 field 计算方案为: [feature_space][:feature_name]:[feature_type]
+// 举例: feature_name = beviour
+// 计算: field = user_feature:beviour:proto
+
+// P.s 2> 特征清理
+// 当我们需要清理特征时, 根据key, 通过HSCAN遍历Hash结构, 得到所有的 field 和
+// value 然后通过 UserFeature_Clean 结构解析value得到 timestamp 字段
+// 如果field对应数据超时了, 通过 HDEL key field field ... 删除多条数据
+
+// 用户特征 - 清理结构
+message UserFeatureClean {
+    int64 timestamp = 1;  // 灌库时间戳
+}
+
+message IDWeight {
+    int64 id     = 1;  // ID
+    float weight = 2;  // 权重
+}
+
+message IDWeightList {
+    repeated IDWeight id_list = 1;
+}
+
+message IDTime {
+    int64 id        = 1;  // ID
+    int64 timestamp = 2;  // 时间戳
+}
+
+message IDTimeList {
+    repeated IDTime id_list = 1;
+}
+
+// 用户基础特征
+message UserFeatureBasic {
+    int64 timestamp         = 1;  // 灌库时间戳
+    int64 user_id           = 2;  // 用户id
+    int32 user_sex          = 3;  // 性别
+    int32 user_province_code= 4;  // 所在省份编号
+    int32 user_city_code    = 5;  // 所在城市编号
+    int32 user_profession   = 6;  // 职业
+    int32 user_lb           = 7;  // 溜币
+    int32 is_vip            = 8;  // 是否vip
+    int32 growth_value      = 9;  // 成长值
+    int32 vip_status        = 10; // vip到期状态
+}
+
+// 用户点击特征
+message UserFeatureClick{
+    int64 timestamp                   = 1;  // 灌库时间戳
+    map<int32, IDTimeList> click_item = 2;  // <类目, 用户点击物料列表>
+}
+
+// 用户搜索特征
+message UserFeatureSearch{
+    int64 timestamp                       = 1;  // 灌库时间戳
+    map<int32, IDTimeList> search_words = 2;  // <类目, 用户最近搜索词列表>
+}
+
+// 用户下载数据
+message UserFeatureDownload{
+    int64 timestamp                      = 1;  // 灌库时间戳
+    map<int32, IDTimeList> download_item = 2;  // <类目, 用户最近下载物料列表>
+}
+
+// 用户索引数据
+message UserFeatureIndex {
+    int64 timestamp                  = 1;  // 灌库时间戳
+    map<int32, IDWeightList> cf_item = 2;  // <类目, 用户协同过滤物料列表>
+}
+

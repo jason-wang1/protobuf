@@ -1,0 +1,25 @@
+syntax = "proto3";
+package COMM_AlgoCenter;
+option go_package = "./;GateWayProtos";
+
+message AlgoCenterRequest {
+    string request_id             = 1;  // 请求唯一标识
+    int64  user_id                = 2;  // 用户ID
+    repeated int32 exp_list       = 3;  // 实验Id列表
+    int32  ret_count              = 4;  // 物料返回数量
+    int64  ll_id                  = 5;  // 物料ID
+    int32  res_type               = 6;  // 物料类目
+    string res_name               = 7;  // 物料名称
+    repeated string keyname_list  = 8;  // 物料关键词列表
+}
+
+message ItemData{
+    int64  ll_id     = 1;  // 物料ID
+    int64  res_type  = 2;  // 物料类目
+    int32  source    = 3;  // 推荐召回id
+}
+
+message AlgoCenterResponse {
+    int64  user_id               = 1;  // 用户ID
+    repeated ItemData item_list  = 2;  // 推荐物料列表
+}

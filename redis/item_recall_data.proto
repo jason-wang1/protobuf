@@ -1,0 +1,26 @@
+syntax = "proto3";
+package RSP_ItemRecallData;
+
+// redis string key:
+// recall_res_style_hot_invert_index_[类目]      热门item列表 top kN选N（k为整数）
+// recall_res_style_quality_invert_index_[类目]  优质item列表 top kN选N（k为整数）
+// recall_res_style_surge_invert_index_[类目]    飙升item列表 top kN选N（k为整数）
+// recall_res_style_ctcvr_invert_index_[类目]    高点击率item列表 top kN选N（k为整数）
+// recall_res_style_dlr_invert_index_[类目]      高下载率item列表 top kN选N（k为整数）
+
+// P.s> 当倒排索引更新完毕后, 需要更新时间戳Hash结构
+// invert_index_update_time (时间戳)
+// 此时更新 field 为: 倒排索引 redis hash key
+// 举例: field = recall_res_style_hot_invert_index
+
+
+message WeightInfo {
+    int64 id       =  1;
+    int32 res_type =  2;
+    float weight   =  3;
+}
+
+message ItemRecall {
+    int64 timestamp               = 1;
+    repeated WeightInfo item_list = 2;
+}
